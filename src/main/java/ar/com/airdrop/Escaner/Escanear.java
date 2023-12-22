@@ -4,11 +4,11 @@ import java.util.LinkedList;
 import java.util.StringTokenizer;
 
 import ar.com.airdrop.context.SpringContext;
+import ar.com.airdrop.dominio.Mensaje;
+import ar.com.airdrop.dominio.Pc;
 import ar.com.airdrop.exceptions.EnviarSocketException;
 import ar.com.airdrop.services.EnvioService;
 import ar.com.airdrop.services.PcService;
-import ar.com.commons.send.airdrop.Mensaje;
-import ar.com.commons.send.airdrop.Pc;
 
 public class Escanear {
 

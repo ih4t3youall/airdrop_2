@@ -5,8 +5,8 @@ import java.net.InetAddress;
 import java.util.LinkedList;
 
 import ar.com.airdrop.context.SpringContext;
+import ar.com.airdrop.dominio.Pc;
 import ar.com.airdrop.services.PcService;
-import ar.com.commons.send.airdrop.Pc;
 
 public class ThreadEscanner extends Thread {
 	

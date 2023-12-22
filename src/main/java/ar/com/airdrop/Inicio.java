@@ -1,14 +1,16 @@
 package ar.com.airdrop;
 
+import java.io.IOException;
+
 import javax.swing.JOptionPane;
 
 import ar.com.airdrop.context.SpringContext;
+import ar.com.airdrop.dominio.Pc;
 import ar.com.airdrop.exceptions.ServiceException;
+import ar.com.airdrop.services.IpService;
 import ar.com.airdrop.services.PcService;
 import ar.com.airdrop.services.RecepcionService;
 import ar.com.airdrop.vistas.MenuPrincipal;
-import ar.com.commons.send.airdrop.Pc;
-import ar.com.commons.send.services.IpService;
 
 public class Inicio {
 
@@ -22,38 +24,31 @@ public class Inicio {
 	
 
 	public Inicio() {
-
 		Pc pc = null;
 		try {
 			pc = ipService.obtenerIp();
 			if (pcService.obtenerIpLocal().equals("0")){
-			pcService.setIpLocalhost(pc.getIp());
+				pcService.setIpLocalhost(pc.getIp());
 			}
 			pcService.setNombreLocal(pc.getNombreEquipo());
 
 			
-		} catch (Exception e) {
+		} catch (ServiceException e) {
 			JOptionPane
 					.showMessageDialog(null,
 							"Error al obtener la ip local, verifique su conexion a internet");
 			System.exit(0);
 		}
-//
-//		try {
-//			new Escanear().inicioEscanner();
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-//
-//		
-//			
-//			new EscanerPuertos().inicioEscanner();
 			
 		
+		recepcionService.iniciarServerSocketObjetos();
 		
-		MenuPrincipal menuPrincipal = new MenuPrincipal();
-		recepcionService.iniciarServerSocketObjetos(menuPrincipal);
-		menuPrincipal.setVisible(true);
+		try {
+			MenuPrincipal menuPrincipal = new MenuPrincipal();
+		} catch (IOException e) {
+			
+			System.out.println("error jodete");
+		}
 
 
 	}

@@ -8,15 +8,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import ar.com.airdrop.context.SpringContext;
 import ar.com.airdrop.exceptions.ArchivoNoExisteException;
 import ar.com.airdrop.services.PcService;
-import ar.com.airdrop.vistas.MenuPrincipal;
-import ar.com.commons.send.services.IpService;
-import org.springframework.beans.factory.annotation.Autowired;
 
 public class Persistencia {
 
+	
 
 	public void Guardar(PcService pcService) {
 		Object obj = pcService;
@@ -53,7 +50,8 @@ public class Persistencia {
 
 			PcService service = (PcService) aux;
 			pcService.setPcExternas(service.obtenerListaPcExternas());
-
+			pcService.setIpLocalhost(service.obtenerIpLocal());
+			
 			
 			
 		} catch (Exception e) {
@@ -71,28 +69,8 @@ public class Persistencia {
 
 		}
 		}else {
-			
-			
 			throw new ArchivoNoExisteException("el archivo no existe");
 		}
-
-	}
-
-	public static String getDownloadDirectory(){
-		String userHome = System.getProperty("user.home");
-		String airdropDownloads = "/Downloads";
-		if(directoryExist(userHome+airdropDownloads)){
-			return userHome + airdropDownloads;
-		}else{
-		File file = new File(userHome+airdropDownloads);
-		file.mkdir();
-		return file.getAbsolutePath();
-
-		}
-
-	}
-	private static boolean directoryExist(String directory){
-		return new File(directory).exists();
 
 	}
 }

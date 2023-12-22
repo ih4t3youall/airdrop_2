@@ -9,11 +9,11 @@ import java.net.Socket;
 
 import javax.swing.JOptionPane;
 
+import ar.com.airdrop.constantes.Constantes;
 import ar.com.airdrop.context.SpringContext;
 import ar.com.airdrop.dominio.MensajeDameFichero;
 import ar.com.airdrop.dominio.MensajeTomaFichero;
 import ar.com.airdrop.services.ArchivoService;
-import ar.com.commons.send.airdrop.Constantes;
 
 public class RecibirArchivo extends Thread {
 

@@ -1,240 +1,230 @@
 package ar.com.airdrop.vistas;
 
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.List;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.LinkedList;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-
-import ar.com.airdrop.componentes.BarraDeMenu;
+import ar.com.airdrop.Escaner.Escanear;
 import ar.com.airdrop.context.SpringContext;
-import ar.com.airdrop.exceptions.ArchivoNoExisteException;
-import ar.com.airdrop.listeners.EscanearListener;
-import ar.com.airdrop.listeners.IngresarIpListener;
-import ar.com.airdrop.listeners.ListenerBotonSalir;
-import ar.com.airdrop.listeners.ListenerEditar;
-import ar.com.airdrop.listeners.ListenerEnviarArchivo;
-import ar.com.airdrop.listeners.ListenerEnviarMensaje;
-import ar.com.airdrop.listeners.ListnerEnviarComando;
+import ar.com.airdrop.dominio.Mensaje;
+import ar.com.airdrop.dominio.Pc;
+import ar.com.airdrop.exceptions.EnviarSocketException;
 import ar.com.airdrop.persistencia.Persistencia;
+import ar.com.airdrop.services.EnvioService;
 import ar.com.airdrop.services.PcService;
-import ar.com.commons.send.airdrop.Pc;
 
-public class MenuPrincipal extends JFrame {
-
-	private JButton escanear, enviarArchivos, salir, ingresarIp, enviarMensaje,
-			editar, enviarComando;
-	private LinkedList<Pc> pcs = new LinkedList<Pc>();
-	private List lista = new List();
+public class MenuPrincipal {
 
 	private static PcService pcService = (PcService) SpringContext.getContext()
 			.getBean("pcService");
 
-	public MenuPrincipal() {
-		super("Escanner : " + pcService.obtenerIpLocal());
+	private static EnvioService envioService = (EnvioService) SpringContext
+			.getContext().getBean("envioService");
 
-		this.setJMenuBar(new BarraDeMenu(this));
+	public MenuPrincipal() throws IOException {
 
-		GridBagConstraints constraints = new GridBagConstraints();
-		editar = new JButton("Editar");
-		escanear = new JButton("Escanear");
-		enviarArchivos = new JButton("Enviar Archivos");
-		salir = new JButton("Salir");
-		ingresarIp = new JButton("Ingresar Ip");
-		enviarMensaje = new JButton("Enviar Mensaje");
-		enviarComando = new JButton("Enviar Comando");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-		Dimension size = new Dimension(550, 200);
+		while (true) {
 
-		setSize(size);
-		setLocation(500, 500);
-		setResizable(false);
+			System.out.println("");
+			System.out.println("");
+			System.out.println("Seleccione...");
+			System.out.println("1) cambiar mi ip");
+			System.out.println("2) enviar mensaje");
+			System.out.println("3) Ver mi ip");
+			System.out.println("4) ver pc externas");
+			System.out.println("5) Enviar comando");
+			System.out.println("6) Guardar configuracion");
+			System.out.println("7) Ingresar ip");
+			System.out.println("8) Escanear...");
+			System.out.println("9) salir");
 
-		this.getContentPane().setLayout(new GridBagLayout());
+			int opcion = 0;
 
-		// lista
-		constraints.gridx = 0;
-		constraints.gridy = 0;
-		constraints.gridwidth = 3;
-		constraints.gridheight = 1;
+			try {
+				opcion = Integer.parseInt(br.readLine());
+			} catch (NumberFormatException e) {
+				System.out.println("Debe Escribir un numero");
 
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(lista, constraints);
-		constraints.weighty = 0;
-		constraints.weightx = 0;
-		// boton1
-		constraints.gridx = 0;
-		constraints.gridy = 1;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(escanear, constraints);
-		constraints.weighty = 0.0;
-
-		// boton 2
-
-		constraints.gridx = 1;
-		constraints.gridy = 1;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(enviarArchivos, constraints);
-		constraints.weighty = 0.0;
-
-		// ip a mano
-		constraints.gridx = 2;
-		constraints.gridy = 1;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(ingresarIp, constraints);
-		constraints.weighty = 0.0;
-
-		// boton 3
-
-		constraints.gridx = 3;
-		constraints.gridy = 1;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(salir, constraints);
-		constraints.weighty = 0.0;
-
-		// boton Editar
-		constraints.gridx = 2;
-		constraints.gridy = 0;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(editar, constraints);
-		constraints.weighty = 0.0;
-
-		// boton enviarComando
-		constraints.gridx = 4;
-		constraints.gridy = 3;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(enviarComando, constraints);
-		constraints.weighty = 0.0;
-
-		this.escanear.addActionListener(new EscanearListener(this));
-		this.ingresarIp.addActionListener(new IngresarIpListener());
-		this.salir.addActionListener(new ListenerBotonSalir(this));
-		this.enviarMensaje.addActionListener(new ListenerEnviarMensaje(lista));
-		this.enviarArchivos.addActionListener(new ListenerEnviarArchivo(lista));
-		this.editar.addActionListener(new ListenerEditar(lista, this));
-		this.enviarComando.addActionListener(new ListnerEnviarComando(lista));
-
-		this.cargarLista();
-
-		// enviar mensaje
-		// ip a mano
-		constraints.gridx = 4;
-		constraints.gridy = 1;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		// constraints.fill = GridBagConstraints.BOTH;
-
-		this.getContentPane().add(enviarMensaje, constraints);
-		constraints.weighty = 0.0;
-
-		// cerrar y terminar programa
-		setDefaultCloseOperation(0); // que por defecto no haga nada
-		addWindowListener(new WindowAdapter() {
-			@Override
-			// (anotacion) se sobreescribe el metodo windowClosing
-			public void windowClosing(WindowEvent we) {
-				int eleccion = JOptionPane.showConfirmDialog(null,
-						"Desea salir?");
-				if (eleccion == 0) {
-					System.out.println("adios");
-					System.exit(0);
-				}
 			}
-		});
-	}
 
-	public LinkedList<Pc> damePcs() {
+			switch (opcion) {
+			case 1:
+				System.out.println("selecciono cambiar la ip");
+				System.out.println("ingrese nueva ip");
+				String local = br.readLine();
+				pcService.getPcLocal().setIp(local);
+				System.out
+						.println("ingrese nuevo nombre si no desea cambiarlo presione enter");
+				local = br.readLine();
 
-		return this.pcs;
+				if (!local.equals("")) {
+					pcService.getPcLocal().setNombreEquipo(local);
+				}
 
-	}
+				System.out
+						.println("su configuracion ah cambiado, sus nuevos datos son...");
+				System.out.println("ip: " + pcService.getPcLocal().getIp());
+				System.out.println("nombre: "
+						+ pcService.getPcLocal().getNombreEquipo());
 
-	public void deshabilitarBotones() {
+				break;
+			case 2:
 
-		this.escanear.setEnabled(false);
-		this.enviarArchivos.setEnabled(false);
-		this.salir.setEnabled(false);
-		this.ingresarIp.setEnabled(false);
+				LinkedList<Pc> obtenerListaPcExternas = pcService
+						.obtenerListaPcExternas();
 
-	}
+				for (Pc pcExterna : obtenerListaPcExternas) {
 
-	public void habilitarBotones() {
+					System.out.println(pcExterna.getIp());
 
-		this.escanear.setEnabled(true);
-		this.enviarArchivos.setEnabled(true);
-		this.salir.setEnabled(true);
-		this.ingresarIp.setEnabled(true);
+				}
 
-	}
+				System.out.println("Ingrese el ip de la pc");
+				String ipEnviar = br.readLine();
+				boolean flag = true;
+				for (Pc pcExterna : obtenerListaPcExternas) {
 
-	public void cargarLista() {
+					if (ipEnviar.equals(pcExterna.getIp())) {
+						flag = true;
 
-		LinkedList<Pc> ListaOtrasPc = pcService.obtenerListaPcExternas();
+					}
 
-		lista.removeAll();
+				}
+				Pc pcEnviar = null;
+				if (flag) {
+					pcEnviar = new Pc(ipEnviar);
+					Mensaje mensaje = new Mensaje(pcEnviar);
+					mensaje.setComando("mensajePrompt");
+					System.out.println("ingrese mensaje a enviar");
+					String mensajeString = br.readLine();
+					mensaje.setMensaje(mensajeString);
+					mensaje.setIpDestino(ipEnviar);
+					try {
+						envioService.enviarMensaje(mensaje);
+					} catch (EnviarSocketException e) {
+						System.out.println("error al enviar el mensaje");
+					}
+				} else {
+					System.out.println("el ip no existe");
+				}
 
-		for (Pc pc : ListaOtrasPc) {
-			String aux = "";
-			if (pc.getNombreEquipo().length() > 14)
-				aux = pc.getNombreEquipo().substring(0, 14);
-			else
-				aux = pc.getNombreEquipo();
+				break;
+			case 3:
+				System.out.println("La ip local es:");
+				System.out.println("ip: " + pcService.getPcLocal().getIp());
+				System.out.println("nombre: "
+						+ pcService.getPcLocal().getNombreEquipo());
+				break;
 
-			lista.add(aux);
+			case 4:
 
+				System.out.println("lista pcs");
+				obtenerListaPcExternas = pcService.obtenerListaPcExternas();
+
+				for (Pc pcExterna : obtenerListaPcExternas) {
+
+					System.out.println(pcExterna.getIp());
+
+				}
+				break;
+			case 5:
+				obtenerListaPcExternas = pcService.obtenerListaPcExternas();
+
+				for (Pc pcExterna : obtenerListaPcExternas) {
+
+					System.out.println(pcExterna.getIp());
+
+				}
+
+				System.out.println("Ingrese el ip de la pc");
+				ipEnviar = br.readLine();
+				flag = false;
+				for (Pc pcExterna : obtenerListaPcExternas) {
+
+					if (ipEnviar.equals(pcExterna.getIp())) {
+						flag = true;
+
+					}
+
+				}
+				pcEnviar = null;
+				if (flag) {
+					pcEnviar = new Pc(ipEnviar);
+
+					System.out.println("Ingrese el comando a enviar");
+					String mensajeString = br.readLine();
+
+					Mensaje mensaje = new Mensaje(pcEnviar);
+					mensaje.setIpDestino(pcEnviar.getIp());
+					mensaje.setComando("bash");
+					mensaje.setMensaje(mensajeString);
+
+					while (true) {
+						System.out
+								.println("con respuesta?responder true/false");
+						String conRespuesta = br.readLine();
+
+						if (conRespuesta.equals("true")) {
+							mensaje.setRespuesta(true);
+							break;
+						}
+
+						if (conRespuesta.equals("false")) {
+							mensaje.setRespuesta(false);
+							break;
+						}
+
+					}
+
+					try {
+						envioService.enviarMensaje(mensaje);
+					} catch (EnviarSocketException e) {
+						System.out.println("error al enviar el mensaje");
+					}
+				} else {
+					System.out.println("el ip no existe");
+				}
+
+				break;
+			case 6:
+				Persistencia persistencia = new Persistencia();
+				persistencia.Guardar(pcService);
+				break;
+
+			case 7:
+				System.out.println("ingrese ip externo");
+				String nuevaIp = br.readLine();
+				Mensaje mensaje = new Mensaje(new Pc(nuevaIp));
+				mensaje.setIpDestino(nuevaIp);
+				mensaje.setComando("who");
+
+				try {
+					envioService.enviarMensaje(mensaje);
+				} catch (EnviarSocketException e) {
+					System.out.println("error al conectarse con la otra pc");
+				}
+
+				break;
+			case 8:
+				try {
+					new Escanear().inicioEscanner();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				break;
+			case 9:
+				System.out.println("terminando...");
+				System.exit(0);
+			default:
+				System.out.println("no existe en el menu");
+				break;
+			}
 		}
-
 	}
 
-	public static PcService getPcService() {
-		return pcService;
-	}
-
-	public static void setPcService(PcService pcService) {
-		MenuPrincipal.pcService = pcService;
-	}
-
-	public void renovarNombre() {
-		this.setTitle(pcService.getPcLocal().getIp());
-
-	}
-
-	public void eliminarElSeleccionado() {
-
-		int selectedIndex = lista.getSelectedIndex();
-		lista.remove(selectedIndex);
-
-	}
-
-	public List getLista() {
-
-		return lista;
-	}
 
 }

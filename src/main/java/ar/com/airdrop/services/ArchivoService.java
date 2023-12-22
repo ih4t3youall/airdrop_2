@@ -1,7 +1,6 @@
 package ar.com.airdrop.services;
 
-
-import ar.com.commons.send.airdrop.Mensaje;
+import ar.com.airdrop.dominio.Mensaje;
 
 public class ArchivoService {
 	
@@ -33,8 +32,8 @@ public class ArchivoService {
 
 		this.mensaje = mensaje;
 	}
-
-
+	
+	
 	public void setDirectorioSalvado(String directorioSalvado){
 		
 		this.directorioSalvado = directorioSalvado;

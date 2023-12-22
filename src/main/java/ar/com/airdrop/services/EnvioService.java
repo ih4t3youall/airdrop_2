@@ -3,10 +3,9 @@ package ar.com.airdrop.services;
 import java.io.FileInputStream;
 import java.io.ObjectOutputStream;
 
+import ar.com.airdrop.dominio.Mensaje;
 import ar.com.airdrop.dominio.MensajeTomaFichero;
 import ar.com.airdrop.exceptions.EnviarSocketException;
-import ar.com.commons.send.airdrop.Mensaje;
-import ar.com.commons.send.airdrop.services.EnviarMensaje;
 
 public class EnvioService{
 
@@ -16,8 +15,6 @@ public class EnvioService{
 
 
 	public void enviarMensaje(Mensaje mensaje) throws EnviarSocketException {
-
-		
 		EnviarMensaje enviarMensaje = new EnviarMensaje(mensaje);
 		enviarMensaje.start();
 	}
@@ -46,11 +43,11 @@ public class EnvioService{
 	            while (leidos > -1)
 	            {
 	                
-	                // Se rellena el n�mero de bytes leidos
+	                // Se rellena el numero de bytes leidos
 	                mensaje.bytesValidos = leidos;
 	                
-	                // Si no se han leido el m�ximo de bytes, es porque el fichero
-	                // se ha acabado y este es el �ltimo mensaje
+	                // Si no se han leido el maximo de bytes, es porque el fichero
+	                // se ha acabado y este es el ultimo mensaje
 	                if (leidos < MensajeTomaFichero.LONGITUD_MAXIMA)
 	                {
 	                    mensaje.ultimoMensaje = true;
@@ -59,10 +56,10 @@ public class EnvioService{
 	                else
 	                    mensaje.ultimoMensaje = false;
 	                
-	                // Se env�a por el socket
+	                // Se envia por el socket
 	                oos.writeObject(mensaje);
 	                
-	                // Si es el �ltimo mensaje, salimos del bucle.
+	                // Si es el ultimo mensaje, salimos del bucle.
 	                if (mensaje.ultimoMensaje)
 	                    break;
 	                
