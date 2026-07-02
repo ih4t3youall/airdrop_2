@@ -34,7 +34,7 @@ public class MenuPrincipal {
 			System.out.println("1) Change my ip");
 			System.out.println("2) Send Message");
 			System.out.println("3) See my Ip");
-			System.out.println("4) See external Pc");
+			System.out.println("4) List detected PC");
 			System.out.println("5) Send command");
 			System.out.println("6) Save configuration");
 			System.out.println("7) Insert ip");
@@ -118,13 +118,17 @@ public class MenuPrincipal {
 
 			case 4:
 
-				System.out.println("List pcs");
+				System.out.println("Detected PCs (respondieron al scan):");
 				obtainExternalPcList = pcService.getListExternalPc();
 
+				if (obtainExternalPcList.isEmpty()) {
+					System.out.println("(ninguna todavia, corre el Scan con la opcion 8)");
+				}
+
 				for (Pc pcExterna : obtainExternalPcList) {
-
-					System.out.println(pcExterna.getIp());
-
+					String nombre = pcExterna.getPcName();
+					System.out.println(pcExterna.getIp()
+							+ (nombre != null ? " - " + nombre : ""));
 				}
 				break;
 			case 5:

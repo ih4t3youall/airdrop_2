@@ -20,19 +20,13 @@ public class RecibirArchivo extends Thread {
 	private FileService fileService = (FileService) SpringContext
 			.getContext().getBean("archivoService");
 
-	private ServerSocket socket;
-	
 	public void run() {
 
-		
-		try {
-			socket = new ServerSocket(
-					Constants.FILE_PORT);
-		} catch (IOException e1) {
-			JOptionPane.showMessageDialog(null, "Error con el socket");
-			e1.printStackTrace();
-		}
-		
+		// Si no se puede bindear el puerto (ej: ya en uso), se avisa y se
+		// termina el thread. Antes quedaba en un while(true) llamando accept()
+		// sobre un socket null -> NPE en loop infinito.
+		try (ServerSocket socket = new ServerSocket(Constants.FILE_PORT)) {
+
 		while (true) {
 
 			// Se espera la conexion. Recien cuando llega (tras el handshake)
@@ -86,6 +80,11 @@ public class RecibirArchivo extends Thread {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+
+		} catch (IOException e1) {
+			JOptionPane.showMessageDialog(null, "Error con el socket");
+			e1.printStackTrace();
 		}
 	}
 }

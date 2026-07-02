@@ -1,56 +1,49 @@
 package ar.com.airdrop.scanner;
 
-import java.util.LinkedList;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import ar.com.airdrop.context.SpringContext;
 import ar.com.airdrop.domine.Message;
-import ar.com.airdrop.domine.Pc;
-import ar.com.airdrop.exceptions.SendThroughtSocketException;
-import ar.com.airdrop.services.SendService;
 import ar.com.airdrop.services.PcService;
 
 public class Escanear {
 
-	private static LinkedList<Pc> pcs = new LinkedList<>();
-	
 	private PcService pcService = (PcService) SpringContext.getContext()
 			.getBean("pcService");
-	private SendService sendService = (SendService) SpringContext
-			.getContext().getBean("sendService");
 
 	public void startScanning() throws InterruptedException {
 
-		String ipToScan = cleanIp(pcService.obtenerIpLocal());
+		String localIp = pcService.obtenerIpLocal();
+		String prefix = cleanIp(localIp);
 
-		for (int i = 0; i < 255; i++) {
+		// Un unico mensaje "who" con nuestra Pc local (ip + nombre). El
+		// receptor lo registra y responde "autenticar", quedando ambos lados
+		// enterados del otro.
+		Message who = new Message(pcService.getPcLocal());
+		who.setCommand("who");
 
-			String serverHostName = ipToScan + i;
-			ThreadScanner threadTestIp = new ThreadScanner(serverHostName,
-					pcs);
-			threadTestIp.start();
-		}
-
-		Thread.sleep(7000);
-
-		for (Pc pc : pcs) {
-			if (!pc.getIp().equals(pcService.obtenerIpLocal())) {
-
-				Message message = new Message(pcService.getPcLocal());
-				message.setDestinationIp(pc.getIp());
-				message.setCommand("who");
-
-				try {
-					sendService.sendMessage(message);
-				} catch (SendThroughtSocketException e) {
-					e.printStackTrace();
-				}
-			} else {
-				System.out.println("omitiendo localhost...");
+		// Pool acotado para no abrir 254 sockets a la vez (limite de
+		// descriptores de archivo, sobre todo en macOS/Linux).
+		ExecutorService pool = Executors.newFixedThreadPool(64);
+		for (int i = 1; i < 255; i++) {
+			String host = prefix + i;
+			if (host.equals(localIp)) {
+				continue; // no nos escaneamos a nosotros mismos
 			}
-
+			pool.submit(new ThreadScanner(host, who));
 		}
 
+		pool.shutdown();
+		pool.awaitTermination(30, TimeUnit.SECONDS);
+
+		// Damos un momento a que lleguen las respuestas "autenticar".
+		Thread.sleep(1000);
+
+		System.out.println("Scan finalizado. "
+				+ "Usa la opcion 4 para ver las PCs con airdrop encontradas.");
 	}
 
 	public String cleanIp(String ip) {
@@ -69,14 +62,6 @@ public class Escanear {
 
 	public void setPcService(PcService pcService) {
 		this.pcService = pcService;
-	}
-
-	public SendService getSendService() {
-		return sendService;
-	}
-
-	public void setSendService(SendService sendService) {
-		this.sendService = sendService;
 	}
 
 }
