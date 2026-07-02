@@ -3,6 +3,7 @@ package ar.com.airdrop.scanner;
 import java.net.Socket;
 import java.util.LinkedList;
 
+import ar.com.airdrop.constants.Constants;
 import ar.com.airdrop.context.SpringContext;
 import ar.com.airdrop.domine.Pc;
 import ar.com.airdrop.services.PcService;
@@ -26,8 +27,7 @@ public class ThreadEscanerPuertos extends Thread {
 	
 	public void run(){
 		
-		try {
-			Socket socket = new Socket(pc.getIp(),8123);
+		try (Socket socket = new Socket(pc.getIp(), Constants.PORT)) {
 			System.out.println("el puerto esta abierto "+pc.getIp());
 			filtered.add(pc);
 		} catch (Exception e) {

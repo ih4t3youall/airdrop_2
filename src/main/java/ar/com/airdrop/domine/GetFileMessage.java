@@ -31,5 +31,5 @@ public class GetFileMessage implements Serializable
     public byte[] fileContent = new byte[MAX_LENGHT];
     
     /** Numero maximo de bytes que se enviain en cada mensaje */
-    public final static int MAX_LENGHT =10;
+    public final static int MAX_LENGHT =8192;
 }

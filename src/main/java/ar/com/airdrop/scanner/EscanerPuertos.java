@@ -23,7 +23,7 @@ public class EscanerPuertos {
 		
 		Iterator<Pc> iterator = pcService.getListExternalPc().iterator();
 		
-		LinkedList<Pc> filtradas = new LinkedList<Pc>();
+		LinkedList<Pc> filtradas = new LinkedList<>();
 		
 		while(iterator.hasNext()){
 			Pc pc = iterator.next();

@@ -13,9 +13,8 @@ public class ThreadScanner extends Thread {
 
 
 	private String serverHostName = null;
-	//	private LinkedList<Pc> pcs = new LinkedList<Pc>();
 	private PcService pcService = (PcService) SpringContext.getContext().getBean("pcService");
-	private LinkedList<Pc> pcs = new LinkedList<Pc>();
+	private LinkedList<Pc> pcs = new LinkedList<>();
 
 
 	public ThreadScanner(String serverHosName, LinkedList<Pc> pcs){
@@ -31,9 +30,9 @@ public class ThreadScanner extends Thread {
 
 			if (ip.isReachable(4000)){
 				this.pcs.add(new Pc(serverHostName));
-				System.out.println("Host not found"+serverHostName);
+				System.out.println("Host found: "+serverHostName);
 			}else {
-				System.out.println("error with the host: "+serverHostName);
+				System.out.println("Host not reachable: "+serverHostName);
 			}
 
 		} catch (Exception e) {

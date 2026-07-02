@@ -44,10 +44,10 @@ public class Start {
 		receptionService.startServerSocketObjects();
 		
 		try {
-			MenuPrincipal menuPrincipal = new MenuPrincipal();
+			new MenuPrincipal();
 		} catch (IOException e) {
-			
-			System.out.println("error jodete");
+			System.out.println("Error al iniciar el menu principal");
+			e.printStackTrace();
 		}
 
 

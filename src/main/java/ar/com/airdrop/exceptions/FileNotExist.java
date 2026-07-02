@@ -2,7 +2,9 @@ package ar.com.airdrop.exceptions;
 
 public class FileNotExist extends Exception {
 
-	public FileNotExist(String e){
-		System.err.println(e);
+	private static final long serialVersionUID = 1L;
+
+	public FileNotExist(String message) {
+		super(message);
 	}
 }

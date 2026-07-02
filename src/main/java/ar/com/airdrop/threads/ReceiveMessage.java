@@ -36,19 +36,12 @@ public class ReceiveMessage extends Thread {
 
 	public void run() {
 
-		while (true) {
-			ServerSocket socket = null;
+		try (ServerSocket socket = new ServerSocket(PORT)) {
 
-			try {
-				socket = new ServerSocket(PORT);
-			} catch (IOException e) {
-				String error = "Error creating socket";
-				System.out.println(error);
-			}
-			System.out.println("Waiting for send....");
+			while (true) {
+				System.out.println("Waiting for send....");
 
-			try {
-				Socket cliente = socket.accept();
+				try (Socket cliente = socket.accept()) {
 
 				String ipOtroCliente = cliente.getInetAddress()
 						.getHostAddress();
@@ -174,18 +167,11 @@ public class ReceiveMessage extends Thread {
 						+ PORT;
 				System.out.println(error);
 
-			} finally {
-
-				try {
-					if (socket != null) {
-						socket.close();
-					}
-				} catch (IOException e) {
-					System.err.println("Error closing the serversocket.");
-
-				}
-
 			}
+			}
+
+		} catch (IOException e) {
+			System.out.println("Error creating socket");
 		}
 
 	}

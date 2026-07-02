@@ -35,40 +35,29 @@ public class RecibirArchivo extends Thread {
 		
 		while (true) {
 
-			FileOutputStream fos;
-			ObjectInputStream ois;
-			Socket accept;
+			String fichero = fileService.obtenerNombreArchivo();
 
-			try {
-
-				// Se abre el socket.
-
-				accept = socket.accept();
+			// Se abre el socket, se pide el fichero y se abre el destino.
+			try (Socket accept = socket.accept();
+					ObjectOutputStream oos = new ObjectOutputStream(
+							accept.getOutputStream());
+					FileOutputStream fos = new FileOutputStream(
+							fileService.getDirectorioSalvado() + "/" + fichero);
+					ObjectInputStream ois = new ObjectInputStream(
+							accept.getInputStream())) {
 
 				System.out.println("recibi un archivo de la ip"
 						+ accept.getInetAddress());
-				String fichero = fileService.obtenerNombreArchivo();
-				// TODO
 
 				// Se envia un mensaje de peticion de fichero.
-				ObjectOutputStream oos = new ObjectOutputStream(
-						accept.getOutputStream());
 				GiveMeFile mensaje = new GiveMeFile();
 				mensaje.fileName = fichero;
 				oos.writeObject(mensaje);
 
-				// Se abre un fichero para empezar a copiar lo que se reciba.
-				fos = new FileOutputStream(fileService.getDirectorioSalvado()+"/"
-						+ mensaje.fileName);
-
-				// Se crea un ObjectInputStream del socket para leer los
-				// mensajes
-				// que contienen el fichero.
-				ois = new ObjectInputStream(accept.getInputStream());
 				GetFileMessage mensajeRecibido;
 				Object mensajeAux;
 				do {
-					// Se lee el mensaje en una variabla auxiliar
+					// Se lee el mensaje en una variable auxiliar
 					mensajeAux = ois.readObject();
 
 					// Si es del tipo esperado, se trata
@@ -82,27 +71,16 @@ public class RecibirArchivo extends Thread {
 								mensajeRecibido.validBytes);
 					} else {
 						// Si no es del tipo esperado, se marca error y se
-						// termina
-						// el bucle
+						// termina el bucle
 						System.err.println("Mensaje no esperado "
 								+ mensajeAux.getClass().getName());
 						break;
 					}
 				} while (!mensajeRecibido.lastMessage);
 
-				// Se cierra socket y fichero
-
-				fos.close();
-				ois.close();
-
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-				
-				
-				
-			}
 		}
 	}
-
-
+}

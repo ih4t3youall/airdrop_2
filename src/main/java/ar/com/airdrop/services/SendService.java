@@ -9,11 +9,6 @@ import ar.com.airdrop.exceptions.SendThroughtSocketException;
 
 public class SendService {
 
-	
-//	private static int PUERTO = 8123;
-
-
-
 	public void sendMessage(Message message) throws SendThroughtSocketException {
 		SendMessage sendMessage = new SendMessage(message);
 		sendMessage.start();
@@ -23,22 +18,17 @@ public class SendService {
 	
 	 public void sendFile(String file, ObjectOutputStream oos)
 	    {
-		 
-		 
-		 
-	        try
+	        try (FileInputStream fis = new FileInputStream(file))
 	        {
 	            boolean lastSent=false;
-	            // Se abre el file.
-	            FileInputStream fis = new FileInputStream(file);
-	            
+
 	            // Se instancia y rellena un message de envio de file
 	            GetFileMessage message = new GetFileMessage();
 	            message.fileName = file;
-	            
+
 	            // Se leen los primeros bytes del file en un campo del message
 	            int read = fis.read(message.fileContent);
-	            
+
 	            // Bucle mientras se vayan leyendo datos del file
 	            while (read > -1)
 	            {

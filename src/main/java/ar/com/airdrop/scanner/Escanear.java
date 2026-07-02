@@ -12,7 +12,7 @@ import ar.com.airdrop.services.PcService;
 
 public class Escanear {
 
-	private static LinkedList<Pc> pcs = new LinkedList<Pc>();
+	private static LinkedList<Pc> pcs = new LinkedList<>();
 	
 	private PcService pcService = (PcService) SpringContext.getContext()
 			.getBean("pcService");

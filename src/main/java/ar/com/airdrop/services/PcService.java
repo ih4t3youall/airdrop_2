@@ -10,7 +10,7 @@ import ar.com.airdrop.persistence.Persistence;
 public class PcService implements Serializable{
 
 	private Pc pcLocal = new Pc("0");
-	private LinkedList<Pc> externalPc = new LinkedList<Pc>();
+	private LinkedList<Pc> externalPc = new LinkedList<>();
 
 	
 	public PcService(){

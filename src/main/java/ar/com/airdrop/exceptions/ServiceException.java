@@ -1,12 +1,11 @@
 package ar.com.airdrop.exceptions;
 
-import java.net.UnknownHostException;
+public class ServiceException extends Exception {
 
-public class ServiceException extends Throwable {
+	private static final long serialVersionUID = 1L;
 
-	public ServiceException(String string, UnknownHostException e){
-		System.out.println("Error getting the Ip Local");
-		e.printStackTrace();
+	public ServiceException(String message, Throwable cause) {
+		super(message, cause);
 	}
-	
+
 }
