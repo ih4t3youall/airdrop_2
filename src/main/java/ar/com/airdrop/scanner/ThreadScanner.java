@@ -36,8 +36,10 @@ public class ThreadScanner extends Thread {
 			}
 
 		} catch (Exception e) {
-			System.out.println("error on threads"+e.getCause());
-			e.printStackTrace();
+			// En macOS isReachable() usa ICMP y puede dar "Permission denied"
+			// sin privilegios. Se loguea una linea, sin volcar el stack trace.
+			System.out.println("No se pudo verificar el host " + serverHostName
+					+ " (" + e.getMessage() + ")");
 		}
 
 
