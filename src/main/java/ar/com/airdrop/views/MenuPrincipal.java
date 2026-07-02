@@ -22,210 +22,203 @@ public class MenuPrincipal {
 	private static SendService sendService = (SendService) SpringContext
 			.getContext().getBean("sendService");
 
+	/** PC destino actual: a donde se mandan mensajes/comandos. */
+	private Pc selectedPc = null;
+
 	public MenuPrincipal() throws IOException {
 
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 		while (true) {
 
-			System.out.println("");
-			System.out.println("");
-			System.out.println("Choose...");
-			System.out.println("1) Change my ip");
-			System.out.println("2) Send Message");
-			System.out.println("3) See my Ip");
-			System.out.println("4) List detected PC");
-			System.out.println("5) Send command");
-			System.out.println("6) Save configuration");
-			System.out.println("7) Insert ip");
-			System.out.println("8) Scan...");
-			System.out.println("9) Exit");
+			printMenu();
 
-			int opcion = 0;
+			String linea = br.readLine();
+			if (linea == null) { // stdin cerrado (EOF): salimos limpio
+				System.exit(0);
+			}
 
+			int opcion;
 			try {
-				opcion = Integer.parseInt(br.readLine());
+				opcion = Integer.parseInt(linea.trim());
 			} catch (NumberFormatException e) {
-				System.out.println("You need to type a number");
-
+				System.out.println("Escribi un numero de opcion.");
+				continue;
 			}
 
 			switch (opcion) {
-			case 1:
-				System.out.println("Change Ip");
-				System.out.println("Insert new Ip");
-				String local = br.readLine();
-				pcService.getPcLocal().setIp(local);
-				System.out
-						.println("You can pick a new neme, if not just press enter");
-				local = br.readLine();
 
-				if (!local.equals("")) {
-					pcService.getPcLocal().setPcName(local);
-				}
-
-				System.out
-						.println("Your configuration change, these are your new credentials...");
-				System.out.println("Ip: " + pcService.getPcLocal().getIp());
-				System.out.println("Name: "
-						+ pcService.getPcLocal().getPcName());
-
-				break;
-			case 2:
-
-				LinkedList<Pc> obtainExternalPcList = pcService
-						.getListExternalPc();
-
-				for (Pc pcExterna : obtainExternalPcList) {
-
-					System.out.println(pcExterna.getIp());
-
-				}
-
-				System.out.println("Inser the new Ip");
-				String ipToSend = br.readLine();
-				boolean flag = true;
-				for (Pc pcExterna : obtainExternalPcList) {
-					if (ipToSend.equals(pcExterna.getIp())) {
-						flag = true;
-					}
-				}
-				Pc sendPc = null;
-				if (flag) {
-					sendPc = new Pc(ipToSend);
-					Message message = new Message(sendPc);
-					message.setCommand("mensajePrompt");
-					System.out.println("Write message to send.");
-					String mensajeString = br.readLine();
-					message.setMessage(mensajeString);
-					message.setDestinationIp(ipToSend);
-					try {
-						sendService.sendMessage(message);
-					} catch (SendThroughtSocketException e) {
-						System.out.println("Error sending the message");
-					}
-				} else {
-					System.out.println("The ip does not exists");
-				}
-
-				break;
-			case 3:
-				System.out.println("Local ip is: ");
-				System.out.println("ip: " + pcService.getPcLocal().getIp());
-				System.out.println("Name: "
-						+ pcService.getPcLocal().getPcName());
-				break;
-
-			case 4:
-
-				System.out.println("Detected PCs (respondieron al scan):");
-				obtainExternalPcList = pcService.getListExternalPc();
-
-				if (obtainExternalPcList.isEmpty()) {
-					System.out.println("(ninguna todavia, corre el Scan con la opcion 8)");
-				}
-
-				for (Pc pcExterna : obtainExternalPcList) {
-					String nombre = pcExterna.getPcName();
-					System.out.println(pcExterna.getIp()
-							+ (nombre != null ? " - " + nombre : ""));
-				}
-				break;
-			case 5:
-				obtainExternalPcList = pcService.getListExternalPc();
-
-				for (Pc externalPc : obtainExternalPcList) {
-
-					System.out.println(externalPc.getIp());
-
-				}
-
-				System.out.println("Insert the pc Ip");
-				ipToSend = br.readLine();
-				flag = false;
-				for (Pc pcExterna : obtainExternalPcList) {
-
-					if (ipToSend.equals(pcExterna.getIp())) {
-						flag = true;
-
-					}
-
-				}
-				sendPc = null;
-				if (flag) {
-					sendPc = new Pc(ipToSend);
-
-					System.out.println("Insert command to send");
-					String mensajeString = br.readLine();
-
-					Message message = new Message(sendPc);
-					message.setDestinationIp(sendPc.getIp());
-					message.setCommand("bash");
-					message.setMessage(mensajeString);
-
-					while (true) {
-						System.out
-								.println("whit answer? true/false");
-						String conRespuesta = br.readLine();
-
-						if (conRespuesta.equals("true")) {
-							message.setResponse(true);
-							break;
-						}
-
-						if (conRespuesta.equals("false")) {
-							message.setResponse(false);
-							break;
-						}
-
-					}
-
-					try {
-						sendService.sendMessage(message);
-					} catch (SendThroughtSocketException e) {
-						System.out.println("Error when sending the message.");
-					}
-				} else {
-					System.out.println("The ip does not exist.");
-				}
-
-				break;
-			case 6:
-				Persistence persistence = new Persistence();
-				persistence.saveRecord(pcService);
-				break;
-
-			case 7:
-				System.out.println("insert external ip");
-				String newIp = br.readLine();
-				Message message = new Message(new Pc(newIp));
-				message.setDestinationIp(newIp);
-				message.setCommand("who");
-
-				try {
-					sendService.sendMessage(message);
-				} catch (SendThroughtSocketException e) {
-					System.out.println("Error whit the handshake");
-				}
-
-				break;
-			case 8:
+			case 1: // Scan network
 				try {
 					new Escanear().startScanning();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				break;
-			case 9:
-				System.out.println("Finishing...");
+
+			case 2: // List / select PC
+				selectPc(br);
+				break;
+
+			case 3: { // Add PC by IP (handshake manual)
+				System.out.println("IP de la PC a agregar:");
+				String newIp = br.readLine().trim();
+				Message message = new Message(new Pc(newIp));
+				message.setDestinationIp(newIp);
+				message.setCommand("who");
+				try {
+					sendService.sendMessage(message);
+					System.out.println("Handshake enviado a " + newIp
+							+ ". Revisa la lista con la opcion 2.");
+				} catch (SendThroughtSocketException e) {
+					System.out.println("Error en el handshake");
+				}
+				break;
+			}
+
+			case 4: { // Send message
+				if (selectedPc == null) {
+					System.out.println("Primero selecciona un destino (opcion 2).");
+					break;
+				}
+				System.out.println("Mensaje para " + describe(selectedPc) + ":");
+				String texto = br.readLine();
+				Message message = new Message(selectedPc);
+				message.setCommand("mensajePrompt");
+				message.setMessage(texto);
+				message.setDestinationIp(selectedPc.getIp());
+				try {
+					sendService.sendMessage(message);
+					System.out.println("Mensaje enviado.");
+				} catch (SendThroughtSocketException e) {
+					System.out.println("Error enviando el mensaje");
+				}
+				break;
+			}
+
+			case 5: { // Send command
+				if (selectedPc == null) {
+					System.out.println("Primero selecciona un destino (opcion 2).");
+					break;
+				}
+				System.out.println("Comando para " + describe(selectedPc) + ":");
+				String comando = br.readLine();
+				Message message = new Message(selectedPc);
+				message.setDestinationIp(selectedPc.getIp());
+				message.setCommand("bash");
+				message.setMessage(comando);
+
+				System.out.println("Con respuesta? (s/n):");
+				String resp = br.readLine();
+				message.setResponse(esSi(resp));
+
+				try {
+					sendService.sendMessage(message);
+					System.out.println("Comando enviado.");
+				} catch (SendThroughtSocketException e) {
+					System.out.println("Error enviando el comando");
+				}
+				break;
+			}
+
+			case 6: { // My IP / name
+				System.out.println("Tu IP:     " + pcService.getPcLocal().getIp());
+				System.out.println("Tu nombre: " + pcService.getPcLocal().getPcName());
+				System.out.println("Nueva IP (Enter para dejar igual):");
+				String nuevaIp = br.readLine();
+				if (nuevaIp != null && !nuevaIp.trim().isEmpty()) {
+					pcService.getPcLocal().setIp(nuevaIp.trim());
+				}
+				System.out.println("Nuevo nombre (Enter para dejar igual):");
+				String nuevoNombre = br.readLine();
+				if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
+					pcService.getPcLocal().setPcName(nuevoNombre.trim());
+				}
+				System.out.println("Ahora sos: " + describe(pcService.getPcLocal()));
+				break;
+			}
+
+			case 7: // Save configuration
+				new Persistence().saveRecord(pcService);
+				System.out.println("Configuracion guardada.");
+				break;
+
+			case 8: // Exit
+				System.out.println("Saliendo...");
 				System.exit(0);
+
 			default:
-				System.out.println("Option does not exist.");
+				System.out.println("Esa opcion no existe.");
 				break;
 			}
 		}
 	}
 
+	private void printMenu() {
+		System.out.println();
+		System.out.println("========== AirDrop ==========");
+		System.out.println("Yo:      " + describe(pcService.getPcLocal()));
+		System.out.println("Destino: "
+				+ (selectedPc != null ? describe(selectedPc) : "(ninguno - opcion 2)"));
+		System.out.println("-----------------------------");
+		System.out.println("1) Scan network");
+		System.out.println("2) List / select PC");
+		System.out.println("3) Add PC by IP");
+		System.out.println("4) Send message");
+		System.out.println("5) Send command");
+		System.out.println("6) My IP / name");
+		System.out.println("7) Save configuration");
+		System.out.println("8) Exit");
+	}
+
+	/** Lista las PCs detectadas numeradas y deja elegir el destino por numero. */
+	private void selectPc(BufferedReader br) throws IOException {
+		LinkedList<Pc> lista = pcService.getListExternalPc();
+
+		if (lista.isEmpty()) {
+			System.out.println("No hay PCs detectadas. Corre el Scan (opcion 1).");
+			return;
+		}
+
+		System.out.println("PCs detectadas:");
+		for (int i = 0; i < lista.size(); i++) {
+			System.out.println("  " + i + ") " + describe(lista.get(i)));
+		}
+		System.out.println("Numero para elegir destino (Enter para volver):");
+
+		String sel = br.readLine();
+		if (sel == null || sel.trim().isEmpty()) {
+			return;
+		}
+		try {
+			int i = Integer.parseInt(sel.trim());
+			if (i >= 0 && i < lista.size()) {
+				selectedPc = lista.get(i);
+				System.out.println("Destino seleccionado: " + describe(selectedPc));
+			} else {
+				System.out.println("Numero fuera de rango.");
+			}
+		} catch (NumberFormatException e) {
+			System.out.println("Numero invalido.");
+		}
+	}
+
+	/** "ip - nombre" (o solo ip si no hay nombre). */
+	private static String describe(Pc pc) {
+		if (pc == null) {
+			return "(ninguno)";
+		}
+		String n = pc.getPcName();
+		return pc.getIp() + (n != null && !n.isEmpty() ? " - " + n : "");
+	}
+
+	private static boolean esSi(String s) {
+		if (s == null) {
+			return false;
+		}
+		s = s.trim().toLowerCase();
+		return s.equals("s") || s.equals("si") || s.equals("y")
+				|| s.equals("yes") || s.equals("true");
+	}
 
 }
