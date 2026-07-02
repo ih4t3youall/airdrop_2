@@ -36,12 +36,16 @@
     </dependencies>
 
     <build>
+      <finalName>airdrop</finalName>
       <plugins>
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-assembly-plugin</artifactId>
-              <version>3.3.0</version> <!-- Asegúrate de usar la última versión -->
+              <version>3.3.0</version>
               <configuration>
+                  <!-- Sin sufijo: el fat jar pisa al thin jar y queda un unico
+                       target/airdrop.jar ejecutable con java -jar airdrop.jar -->
+                  <appendAssemblyId>false</appendAssemblyId>
                   <archive>
                       <manifest>
                           <mainClass>ar.com.airdrop.Main</mainClass>
@@ -53,15 +57,64 @@
               </configuration>
               <executions>
                   <execution>
-                      <id>make-assembly</id> <!-- Este es el ID de tu ejecución -->
-                      <phase>package</phase> <!-- Ensambla durante la fase de empaquetado -->
+                      <id>make-assembly</id>
+                      <phase>package</phase>
                       <goals>
-                          <goal>single</goal> <!-- Crea un solo JAR ejecutable -->
+                          <goal>single</goal>
                       </goals>
+                  </execution>
+              </executions>
+          </plugin>
+
+          <!-- Copia airdrop.jar a la carpeta destino segun el SO (deploy.dir,
+               definido por los perfiles de mas abajo) al hacer mvn install -->
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-antrun-plugin</artifactId>
+              <version>3.1.0</version>
+              <executions>
+                  <execution>
+                      <id>deploy-jar</id>
+                      <phase>install</phase>
+                      <goals>
+                          <goal>run</goal>
+                      </goals>
+                      <configuration>
+                          <target>
+                              <mkdir dir="${deploy.dir}"/>
+                              <copy file="${project.build.directory}/airdrop.jar"
+                                    todir="${deploy.dir}" overwrite="true"/>
+                              <echo message="airdrop.jar copiado a ${deploy.dir}"/>
+                          </target>
+                      </configuration>
                   </execution>
               </executions>
           </plugin>
       </plugins>
     </build>
+
+    <profiles>
+        <!-- Mac y Linux: macOS tambien matchea la familia 'unix' en Maven -->
+        <profile>
+            <id>deploy-unix</id>
+            <activation>
+                <os><family>unix</family></os>
+            </activation>
+            <properties>
+                <deploy.dir>${user.home}/.scripts/javaApps</deploy.dir>
+            </properties>
+        </profile>
+
+        <!-- Windows: se deja en el Escritorio -->
+        <profile>
+            <id>deploy-windows</id>
+            <activation>
+                <os><family>windows</family></os>
+            </activation>
+            <properties>
+                <deploy.dir>${user.home}/Desktop</deploy.dir>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>

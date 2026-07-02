@@ -35,19 +35,22 @@ public class RecibirArchivo extends Thread {
 		
 		while (true) {
 
-			String fichero = fileService.obtenerNombreArchivo();
+			// Se espera la conexion. Recien cuando llega (tras el handshake)
+			// el fileService tiene seteado el archivo a recibir.
+			try (Socket accept = socket.accept()) {
 
-			// Se abre el socket, se pide el fichero y se abre el destino.
-			try (Socket accept = socket.accept();
-					ObjectOutputStream oos = new ObjectOutputStream(
-							accept.getOutputStream());
-					FileOutputStream fos = new FileOutputStream(
-							fileService.getDirectorioSalvado() + "/" + fichero);
-					ObjectInputStream ois = new ObjectInputStream(
-							accept.getInputStream())) {
+				String fichero = fileService.obtenerNombreArchivo();
 
 				System.out.println("recibi un archivo de la ip"
 						+ accept.getInetAddress());
+
+				// Se pide el fichero y se abre el destino para copiarlo.
+				try (ObjectOutputStream oos = new ObjectOutputStream(
+								accept.getOutputStream());
+						FileOutputStream fos = new FileOutputStream(
+								fileService.getDirectorioSalvado() + "/" + fichero);
+						ObjectInputStream ois = new ObjectInputStream(
+								accept.getInputStream())) {
 
 				// Se envia un mensaje de peticion de fichero.
 				GiveMeFile mensaje = new GiveMeFile();
@@ -77,6 +80,8 @@ public class RecibirArchivo extends Thread {
 						break;
 					}
 				} while (!mensajeRecibido.lastMessage);
+
+				}
 
 			} catch (Exception e) {
 				e.printStackTrace();
