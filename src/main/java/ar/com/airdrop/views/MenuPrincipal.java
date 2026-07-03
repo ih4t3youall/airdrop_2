@@ -1,9 +1,14 @@
 package ar.com.airdrop.views;
 
+import java.awt.HeadlessException;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
+
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 
 import ar.com.airdrop.scanner.Escanear;
 import ar.com.airdrop.context.SpringContext;
@@ -23,7 +28,7 @@ public class MenuPrincipal {
 			.getContext().getBean("sendService");
 
 	/** PC destino actual: a donde se mandan mensajes/comandos. */
-	private Pc selectedPc = null;
+	private static Pc selectedPc = null;
 
 	public MenuPrincipal() throws IOException {
 
@@ -121,7 +126,28 @@ public class MenuPrincipal {
 				break;
 			}
 
-			case 6: { // My IP / name
+			case 6: { // Send file
+				if (selectedPc == null) {
+					System.out.println("Primero selecciona un destino (opcion 2).");
+					break;
+				}
+				File archivo = elegirArchivo();
+				if (archivo == null) {
+					System.out.println("Envio cancelado.");
+					break;
+				}
+				System.out.println("Enviando " + archivo.getName() + " a "
+						+ describe(selectedPc) + "...");
+				try {
+					sendService.sendFileTo(selectedPc.getIp(), archivo);
+					System.out.println("Archivo enviado.");
+				} catch (IOException e) {
+					System.out.println("Error enviando el archivo: " + e.getMessage());
+				}
+				break;
+			}
+
+			case 7: { // My IP / name
 				System.out.println("Tu IP:     " + pcService.getPcLocal().getIp());
 				System.out.println("Tu nombre: " + pcService.getPcLocal().getPcName());
 				System.out.println("Nueva IP (Enter para dejar igual):");
@@ -138,12 +164,12 @@ public class MenuPrincipal {
 				break;
 			}
 
-			case 7: // Save configuration
+			case 8: // Save configuration
 				new Persistence().saveRecord(pcService);
 				System.out.println("Configuracion guardada.");
 				break;
 
-			case 8: // Exit
+			case 9: // Exit
 				System.out.println("Saliendo...");
 				System.exit(0);
 
@@ -154,7 +180,7 @@ public class MenuPrincipal {
 		}
 	}
 
-	private void printMenu() {
+	public static void printMenu() {
 		System.out.println();
 		System.out.println("========== AirDrop ==========");
 		System.out.println("Yo:      " + describe(pcService.getPcLocal()));
@@ -166,9 +192,10 @@ public class MenuPrincipal {
 		System.out.println("3) Add PC by IP");
 		System.out.println("4) Send message");
 		System.out.println("5) Send command");
-		System.out.println("6) My IP / name");
-		System.out.println("7) Save configuration");
-		System.out.println("8) Exit");
+		System.out.println("6) Send file");
+		System.out.println("7) My IP / name");
+		System.out.println("8) Save configuration");
+		System.out.println("9) Exit");
 	}
 
 	/** Lista las PCs detectadas numeradas y deja elegir el destino por numero. */
@@ -200,6 +227,33 @@ public class MenuPrincipal {
 			}
 		} catch (NumberFormatException e) {
 			System.out.println("Numero invalido.");
+		}
+	}
+
+	/** Abre un selector grafico y devuelve el archivo elegido (o null si se cancela). */
+	private static File elegirArchivo() {
+		// Frame invisible siempre-al-frente para que el dialogo no quede
+		// escondido detras de la terminal.
+		JFrame parent = new JFrame();
+		parent.setAlwaysOnTop(true);
+		parent.setLocationRelativeTo(null);
+		try {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Elegi el archivo a enviar");
+			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+
+			if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+				File f = chooser.getSelectedFile();
+				if (f != null && f.isFile()) {
+					return f;
+				}
+			}
+			return null;
+		} catch (HeadlessException e) {
+			System.out.println("No hay entorno grafico disponible para el selector.");
+			return null;
+		} finally {
+			parent.dispose();
 		}
 	}
 

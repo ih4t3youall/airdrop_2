@@ -1,8 +1,12 @@
 package ar.com.airdrop.services;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.net.Socket;
 
+import ar.com.airdrop.constants.Constants;
 import ar.com.airdrop.domine.Message;
 import ar.com.airdrop.domine.GetFileMessage;
 import ar.com.airdrop.exceptions.SendThroughtSocketException;
@@ -13,73 +17,48 @@ public class SendService {
 		SendMessage sendMessage = new SendMessage(message);
 		sendMessage.start();
 	}
-	
-	
-	
-	 public void sendFile(String file, ObjectOutputStream oos)
-	    {
-	        try (FileInputStream fis = new FileInputStream(file))
-	        {
-	            boolean lastSent=false;
 
-	            // Se instancia y rellena un message de envio de file
-	            GetFileMessage message = new GetFileMessage();
-	            message.fileName = file;
+	/**
+	 * Envia un archivo (de cualquier tipo) al puerto de archivos del destino.
+	 * Se conecta, streamea el contenido en chunks y cierra.
+	 */
+	public void sendFileTo(String ip, File file) throws IOException {
+		try (Socket socket = new Socket(ip, Constants.FILE_PORT);
+				ObjectOutputStream oos = new ObjectOutputStream(
+						socket.getOutputStream())) {
+			sendFile(file, oos);
+		}
+	}
 
-	            // Se leen los primeros bytes del file en un campo del message
-	            int read = fis.read(message.fileContent);
+	/**
+	 * Streamea el archivo como una secuencia de {@link GetFileMessage},
+	 * terminando con un chunk marcado como ultimo. No cierra el stream: eso
+	 * es responsabilidad de quien lo abrio.
+	 */
+	public void sendFile(File file, ObjectOutputStream oos) throws IOException {
+		try (FileInputStream fis = new FileInputStream(file)) {
+			byte[] buffer = new byte[GetFileMessage.MAX_LENGHT];
+			int read;
+			while ((read = fis.read(buffer)) > -1) {
+				GetFileMessage chunk = new GetFileMessage();
+				chunk.fileName = file.getName();
+				chunk.validBytes = read;
+				chunk.lastMessage = false;
+				System.arraycopy(buffer, 0, chunk.fileContent, 0, read);
+				oos.writeObject(chunk);
+				// reset() evita que ObjectOutputStream retenga en memoria todos
+				// los chunks ya enviados (importante en archivos grandes).
+				oos.reset();
+			}
 
-	            // Bucle mientras se vayan leyendo datos del file
-	            while (read > -1)
-	            {
-	                
-	                // Se rellena el numero de bytes leidos
-	                message.validBytes = read;
-	                
-	                // Si no se han leido el maximo de bytes, es porque el file
-	                // se ha acabado y este es el ultimo message
-	                if (read < GetFileMessage.MAX_LENGHT)
-	                {
-	                    message.lastMessage = true;
-	                    lastSent=true;
-	                }
-	                else
-	                    message.lastMessage = false;
-	                
-	                // Se envia por el socket
-	                oos.writeObject(message);
-	                
-	                // Si es el ultimo message, salimos del bucle.
-	                if (message.lastMessage)
-	                    break;
-	                
-	                // Se crea un nuevo message
-	                message = new GetFileMessage();
-	                message.fileName = file;
-	                
-	                // y se leen sus bytes.
-	                read = fis.read(message.fileContent);
-	            }
-	            
-	            if (lastSent==false)
-	            {
-	                message.lastMessage =true;
-	                message.validBytes =0;
-	                oos.writeObject(message);
-	            }
-	            // Se cierra el ObjectOutputStream
-	            oos.close();
-	        } catch (Exception e)
-	        {
-	            e.printStackTrace();
-	        }
-	    }
+			// Chunk final que le indica al receptor que termino el archivo.
+			GetFileMessage end = new GetFileMessage();
+			end.fileName = file.getName();
+			end.validBytes = 0;
+			end.lastMessage = true;
+			oos.writeObject(end);
+			oos.flush();
+		}
+	}
 
-
-
-
-
-	 
-	 
-	 
 }

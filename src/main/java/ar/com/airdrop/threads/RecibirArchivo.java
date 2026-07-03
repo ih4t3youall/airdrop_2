@@ -1,90 +1,82 @@
 package ar.com.airdrop.threads;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import javax.swing.JOptionPane;
 
 import ar.com.airdrop.constants.Constants;
-import ar.com.airdrop.context.SpringContext;
-import ar.com.airdrop.domine.GiveMeFile;
 import ar.com.airdrop.domine.GetFileMessage;
-import ar.com.airdrop.services.FileService;
+import ar.com.airdrop.views.MenuPrincipal;
 
+/**
+ * Escucha en el puerto de archivos y recibe archivos de cualquier tipo,
+ * guardandolos en ~/airdrop-recibidos. El emisor streamea el contenido como
+ * una secuencia de {@link GetFileMessage} y cierra con un chunk final.
+ */
 public class RecibirArchivo extends Thread {
 
-	private FileService fileService = (FileService) SpringContext
-			.getContext().getBean("archivoService");
+	private static final File CARPETA_DESTINO = new File(
+			System.getProperty("user.home"), "airdrop-recibidos");
 
 	public void run() {
 
 		// Si no se puede bindear el puerto (ej: ya en uso), se avisa y se
-		// termina el thread. Antes quedaba en un while(true) llamando accept()
-		// sobre un socket null -> NPE en loop infinito.
+		// termina el thread (sin quedar en un while(true) sobre socket null).
 		try (ServerSocket socket = new ServerSocket(Constants.FILE_PORT)) {
 
-		while (true) {
-
-			// Se espera la conexion. Recien cuando llega (tras el handshake)
-			// el fileService tiene seteado el archivo a recibir.
-			try (Socket accept = socket.accept()) {
-
-				String fichero = fileService.obtenerNombreArchivo();
-
-				System.out.println("recibi un archivo de la ip"
-						+ accept.getInetAddress());
-
-				// Se pide el fichero y se abre el destino para copiarlo.
-				try (ObjectOutputStream oos = new ObjectOutputStream(
-								accept.getOutputStream());
-						FileOutputStream fos = new FileOutputStream(
-								fileService.getDirectorioSalvado() + "/" + fichero);
+			while (true) {
+				try (Socket accept = socket.accept();
 						ObjectInputStream ois = new ObjectInputStream(
 								accept.getInputStream())) {
 
-				// Se envia un mensaje de peticion de fichero.
-				GiveMeFile mensaje = new GiveMeFile();
-				mensaje.fileName = fichero;
-				oos.writeObject(mensaje);
+					recibirArchivo(accept, ois);
 
-				GetFileMessage mensajeRecibido;
-				Object mensajeAux;
-				do {
-					// Se lee el mensaje en una variable auxiliar
-					mensajeAux = ois.readObject();
-
-					// Si es del tipo esperado, se trata
-					if (mensajeAux instanceof GetFileMessage) {
-						mensajeRecibido = (GetFileMessage) mensajeAux;
-						// Se escribe en pantalla y en el fichero
-						System.out.print(new String(
-								mensajeRecibido.fileContent, 0,
-								mensajeRecibido.validBytes));
-						fos.write(mensajeRecibido.fileContent, 0,
-								mensajeRecibido.validBytes);
-					} else {
-						// Si no es del tipo esperado, se marca error y se
-						// termina el bucle
-						System.err.println("Mensaje no esperado "
-								+ mensajeAux.getClass().getName());
-						break;
-					}
-				} while (!mensajeRecibido.lastMessage);
-
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
-
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
-		}
 
 		} catch (IOException e1) {
 			JOptionPane.showMessageDialog(null, "Error con el socket");
 			e1.printStackTrace();
 		}
+	}
+
+	private void recibirArchivo(Socket accept, ObjectInputStream ois)
+			throws Exception {
+
+		// El primer chunk trae el nombre del archivo.
+		GetFileMessage chunk = (GetFileMessage) ois.readObject();
+
+		String nombre = new File(chunk.fileName).getName(); // solo el nombre
+		if (nombre == null || nombre.isEmpty()) {
+			nombre = "archivo_recibido";
+		}
+
+		CARPETA_DESTINO.mkdirs();
+		File destino = new File(CARPETA_DESTINO, nombre);
+
+		System.out.println("Recibiendo archivo de "
+				+ accept.getInetAddress().getHostAddress() + "...");
+
+		try (FileOutputStream fos = new FileOutputStream(destino)) {
+			while (true) {
+				fos.write(chunk.fileContent, 0, chunk.validBytes);
+				if (chunk.lastMessage) {
+					break;
+				}
+				chunk = (GetFileMessage) ois.readObject();
+			}
+		}
+
+		System.out.println("Archivo recibido: " + destino.getAbsolutePath());
+
+		// Terminado el intercambio, volvemos al menu principal.
+		MenuPrincipal.printMenu();
 	}
 }

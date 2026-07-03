@@ -7,6 +7,5 @@
 	<bean id="pcService" class="ar.com.airdrop.services.PcService"/>
 	<bean id="sendService" class="ar.com.airdrop.services.SendService"/>
 	<bean id="recepcionService" class="ar.com.airdrop.services.ReceptionService"/>
-	<bean id="archivoService" class="ar.com.airdrop.services.FileService"/>
 
 </beans>
